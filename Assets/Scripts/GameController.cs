@@ -126,13 +126,11 @@ public class GameController : MonoBehaviour {
         // case 0: 0, r0
         int file = numPos % 8;
         int rank = (int)Math.Floor((numPos / 8.0d));
-        // rank++;
-        // file++;
-
+        
         fileRank[0] = 'a' + file;
         fileRank[1] = 8 - rank; // flip position so descends from top left -> bottom right
             
-        Debug.Log(fileRank[0].ToString());
+        // Debug.Log(fileRank[0].ToString());
         return fileRank;
     }
 
