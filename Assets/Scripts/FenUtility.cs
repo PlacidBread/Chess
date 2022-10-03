@@ -9,19 +9,20 @@ public class FenUtility {
     };
     private const string StartFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     public PosInfo _posInfo = new PosInfo();
+
+    private static string _lastFen;
         
     public void FenToBoard(string fen) {
         if (fen.Equals("default")) { fen = StartFen; }
-            
         string[] fArray = fen.Split(" ");
             
-        int rank = 7;
+        int rank = 0;
         int file = 0;
         
         foreach (var c in fArray[0]) {
             // Debug.Log(c + " " + ((rank + 1) * 8 - file - 1));
             if (c == '/') {
-                rank--;
+                rank++;
                 file = 0;
                 continue;
             }
@@ -30,27 +31,27 @@ public class FenUtility {
                 int tmp = c - '0';
                 for (int i = 0; i < tmp; i++) {
                     _posInfo.tiles[index] = (int)Piece.None;
-                    _posInfo.colours[index] = -1;
                     file++;
                 }
             }
             else {
                 char newc; // use as c is immutable
                 if (Char.IsUpper(c)) {
-                    _posInfo.colours[index] = 0;
+                    _posInfo.colours[index] = true;
                     newc = Char.ToLower(c);
                 }
                 else {
-                    _posInfo.colours[index] = 1;
+                    _posInfo.colours[index] = false;
                     newc = c;
                 }
                 _posInfo.tiles[index] = (int)mapPiece[Char.ToLower(newc)];
                 file++;
             }
         }
+
+        _lastFen = fen;
     }
     public void OutputInfo() {
-        Debug.Log("ran");
         for (int i = 64; i > 0; i--) {
             if (i % 8 == 0) {
                 Debug.Log("");
@@ -62,10 +63,10 @@ public class FenUtility {
 
 public class PosInfo {
     public int[] tiles;
-    public int[] colours; // -1 = none, 0 = white, 1 = black
+    public bool[] colours; // true (1) = white, false (0) = black
 
     public PosInfo() {
         tiles = new int[64];
-        colours = new int[64];
+        colours = new bool[64];
     }
 }
