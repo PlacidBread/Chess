@@ -112,8 +112,6 @@ public class GameController : MonoBehaviour {
         Piece pieceType = (Piece)fen._posInfo.tiles[i];
         bool isWhite = fen._posInfo.colours[i];
         
-        
-        Debug.Log(fen._posInfo.colours[i]);
         // conduct fewer comparisons by checking none first 
         if (pieceType == Piece.None) {
             return;

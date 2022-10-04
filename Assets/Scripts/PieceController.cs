@@ -3,15 +3,18 @@ using UnityEngine;
 
 public class PieceController : MonoBehaviour {
     private GameObject _selectedAss;
+    
     public GameObject squareSelected;
-
+    public GameObject darkSquare;
+    public GameObject lightSquare;
+    
     private bool _pieceSelected;
 
     private void Start() {
         _pieceSelected = false;
     }
 
-    private void FixedUpdate() {
+    private void Update() {
         if (Input.GetMouseButtonDown(0)) {
             HandleSelection();
         }
@@ -25,20 +28,18 @@ public class PieceController : MonoBehaviour {
 
     private void WaitForClick() {
         Vector2 mousePos = (Vector2)Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        // convert to 'real' pos
-        mousePos.x += 0.5f;
-        mousePos.y += 0.5f;
         try {
-            Debug.Log(mousePos);
             Collider2D targetObject = Physics2D.OverlapPoint(mousePos);
             if (targetObject) {
                 _selectedAss = targetObject.transform.gameObject;
-                TileProps tileProps = _selectedAss.GetComponent<TileProps>();
-                if (tileProps.pid != 0) {
-                    Instantiate(squareSelected, new Vector2(Mathf.Floor(mousePos.x), Mathf.Floor(mousePos.y)),
-                        Quaternion.identity);
-                    _pieceSelected = true;
-                }
+                Debug.Log(_selectedAss);
+                
+                // TileProps tileProps = _selectedAss.GetComponent<TileProps>();
+                // if (tileProps.pid != 0) {
+                //     Instantiate(squareSelected, new Vector2(Mathf.Floor(mousePos.x), Mathf.Floor(mousePos.y)),
+                //         Quaternion.identity);
+                //     // _pieceSelected = true;
+                // }
             }
         }
         catch (NullReferenceException e) {
