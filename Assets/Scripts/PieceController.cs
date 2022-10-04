@@ -28,7 +28,6 @@ public class PieceController : MonoBehaviour {
 
     private void WaitForClick() {
         Vector2 mousePos = (Vector2)Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePos.x += (float)0.001;
         try {
             Collider2D targetObject = Physics2D.OverlapPoint(mousePos);
             if (targetObject) {
