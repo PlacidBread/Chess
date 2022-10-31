@@ -1,6 +1,6 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class GameController : MonoBehaviour {
@@ -26,10 +26,10 @@ public class GameController : MonoBehaviour {
     private GameObject _parentPieces;
     
     [NonSerialized]
-    public GameObject[] _tiles;
+    public static TileProps[] arrayTile;
     [NonSerialized]
-    public List<GameObject> pieces;
-    
+    public static List<PieceProps> pidToPiece;
+
     private static int _id;
 
     private static readonly int[,] RotationMatrix = {
@@ -66,18 +66,18 @@ public class GameController : MonoBehaviour {
     };
 
     private void Start() {
+        _id = 0;
         _parentBoard = GameObject.Find("Board");
         _parentPieces = GameObject.Find("Pieces");
-        _tiles = new GameObject[64];
-        pieces = new List<GameObject>();
+        arrayTile = new TileProps[64];
+        pidToPiece = new List<PieceProps>();
         DrawBoard();
-        FenUtility fen = new FenUtility();
-        fen.FenToBoard("default");
+        StartCoroutine(WaitForFen());
+        
+        // FenUtility fen = new FenUtility();
+        // fen.FenToBoard("default");
         //fen.OutputInfo();
         
-        for (int i = 0; i < 64; i++) {
-            DrawPiece(fen, i);
-        }
         // for (int i = 0; i < 64; i++) {
         //     TileProps tp =  _tiles[i].GetComponent<TileProps>();
         //     tp.OutputInfo();
@@ -92,84 +92,65 @@ public class GameController : MonoBehaviour {
                 
                 int rPos = RotationMatrix[file, rank];
                 bool isLight = (file + rank) % 2 != 0;
-                
                 GameObject obj = isLight ? lightSquare : darkSquare;
-                
-                TileProps tileProps = obj.GetComponent<TileProps>();
-                tileProps.id = (rPos); // assign id
-                tileProps.pos = intToPos(tileProps.id);
-                tileProps.vec = posToVec(tileProps.pos);
-                Vector2 position = tileProps.vec;
+                Tuple<char, int> cPos = intToPos(rPos);
+                Vector2 cVec = posToVec(cPos);
+                TileProps tileProps = new TileProps { id = rPos, pos = cPos, vec = Vector2Int.RoundToInt(cVec) };
 
-                Create(obj, position, tileProps);
+                Create<TileProps>(obj, tileProps.vec);
+                arrayTile[rPos] = tileProps;
             }
         }
     }
 
-    private void DrawPiece(FenUtility fen, int i) {
+    private void DrawPiece(int i) {
         Vector2 pos = posToVec(intToPos(i));
         GameObject piece;
-        Piece pieceType = (Piece)fen._posInfo.tiles[i];
-        bool isWhite = fen._posInfo.colours[i];
-        
+        PieceType pieceType = (PieceType)FenUtility._posInfo.tiles[i];
+        bool isWhite = FenUtility._posInfo.colours[i];
+
         // conduct fewer comparisons by checking none first 
-        if (pieceType == Piece.None) {
+        if (pieceType == PieceType.None) {
+            arrayTile[i].pid = -1;
             return;
         }
-
+        PieceProps pieceProps = new PieceProps { tVec = Vector2Int.RoundToInt(pos), type = pieceType, isWhite = isWhite };
+        
         switch (pieceType) {
-            case Piece.King:
-                piece = Create(isWhite ? wKing : bKing, pos);
+            case PieceType.King:
+                piece = Create<PieceProps>(isWhite ? wKing : bKing, pos);
                 break;
-            case Piece.Queen:
-                piece = Create(isWhite ? wQueen : bQueen, pos);
+            case PieceType.Queen:
+                piece = Create<PieceProps>(isWhite ? wQueen : bQueen, pos);
                 break;
-            case Piece.Rook:
-                piece = Create(isWhite ? wRook: bRook, pos);
+            case PieceType.Rook:
+                piece = Create<PieceProps>(isWhite ? wRook: bRook, pos);
                 break;
-            case Piece.Bishop:
-                piece = Create(isWhite ? wBishop : bBishop, pos);
+            case PieceType.Bishop:
+                piece = Create<PieceProps>(isWhite ? wBishop : bBishop, pos);
                 break;
-            case Piece.Knight:
-                piece = Create(isWhite ? wKnight : bKnight, pos);
+            case PieceType.Knight:
+                piece = Create<PieceProps>(isWhite ? wKnight : bKnight, pos);
                 break;
-            case Piece.Pawn:
-                piece = Create(isWhite ? wPawn : bPawn, pos);
+            case PieceType.Pawn:
+                piece = Create<PieceProps>(isWhite ? wPawn : bPawn, pos);
                 break;
             default:
                 return;
         }
 
-        TileProps tileProps = _tiles[ToRawNum(pos)].GetComponent<TileProps>();
-        tileProps.pid = _id;
-        
-        var pieceProps = piece.GetComponent<PieceProps>();
-        pieceProps.id = _id;
-        pieceProps.type = pieceType;
-        pieceProps.isWhite = isWhite;
-        _id++;
+        arrayTile[i].pid = _id++;
+        pidToPiece.Add(pieceProps);
     }
         
     // TODO: create dictionary for looking up gameObject based on index
-    private GameObject Create(GameObject obj, Vector2 pos, TileProps tp = null) {
+    private GameObject Create<T>(GameObject obj, Vector2 pos) {
         var newObj = Instantiate(obj, new Vector3(pos.x, pos.y, 0), Quaternion.identity);
         // ensure that new objects are created under correct parent
-        if (obj == lightSquare || obj == darkSquare) {
-            if (tp == null) {
-                throw new ArgumentException("TileProps object required for tile creation");
-            }
-            TileProps tileProps = newObj.GetComponent<TileProps>();
-            tileProps.id = tp.id;
-            tileProps.pos = tp.pos;
-            tileProps.vec = tp.vec;
-
-            _tiles[tileProps.id] = newObj;
-            
+        if (typeof(T) == typeof(TileProps)) {
             newObj.transform.parent = _parentBoard.transform;
         }
         else {
-            pieces.Add(newObj);
-
             newObj.transform.parent = _parentPieces.transform; 
         }
 
@@ -179,33 +160,43 @@ public class GameController : MonoBehaviour {
     // ----------------------- //
     //    Utility functions    //
     
-    // The two functions below will usually be called together, but are separate so the square number can be identified
-    private int[] intToPos(int numPos) {
-        int[] fileRank = new int[2];
+    public static Tuple<char, int> intToPos(int numPos) {
+        
         // case 63: 63/8 = 7 floored, 63 % 8 = r7
         // case 44: 44/8 = 5 floored, 44 % 8 = r4
         // case 1: 1/8 = 0 floored, 1 % 8 = r1
         // case 0: 0, r0
         int file = numPos % 8;
         int rank = (int)Math.Floor((numPos / 8.0d));
-        
-        fileRank[0] = 'a' + file;
-        fileRank[1] = 8 - rank; // flip position so descends from top left -> bottom right
+        Tuple<char, int> fileRank = new Tuple<char, int>((char)('a' + file), 8 - rank); // flip position so descends from top left -> bottom right
             
         // Debug.Log(fileRank[0].ToString());
         return fileRank;
     }
 
-    private Vector2 posToVec(int[] posses) {
+    private Vector2 posToVec(Tuple<char, int> posses) {
         // column = file, row = rank (different context so names different)
-        int column = posses[0] - 'a'; // ASCII a == 97
-        int row = posses[1] - 1;
+        int column = posses.Item1 - 'a'; // ASCII a == 97
+        int row = posses.Item2 - 1;
 
         return new Vector2(column, row);
     }
 
     
-    public int ToRawNum(Vector2 vec) {
+    public static int ToRawNum(Vector2 vec) {
         return BetterMatrix[Mathf.RoundToInt(vec.x), Mathf.RoundToInt(vec.y)];
+    }
+    
+    public static int ToRawNum(Tuple<char, int> pos) {
+        int yFile = pos.Item1 - 'a';
+        int xRank = pos.Item2 - 1;
+        return BetterMatrix[Mathf.RoundToInt(xRank), Mathf.RoundToInt(yFile)];
+    }
+
+    IEnumerator WaitForFen() {
+        yield return new WaitUntil(() => FenUtility.fenCreated);
+        for (int i = 0; i < 64; i++) {
+            DrawPiece(i);
+        }
     }
 }

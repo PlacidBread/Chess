@@ -3,25 +3,37 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class FenUtility {
-    private Dictionary<char, Piece> mapPiece = new Dictionary<char, Piece>() {
-        {'k', Piece.King}, {'q', Piece.Queen}, {'r', Piece.Rook}, {'b', Piece.Bishop}, 
-        {'n', Piece.Knight}, {'p', Piece.Pawn}
+    public static bool fenCreated = false;
+    
+    private static readonly Dictionary<char, PieceType> mapPiece = new () {
+        {'k', PieceType.King}, {'q', PieceType.Queen}, {'r', PieceType.Rook}, {'b', PieceType.Bishop}, 
+        {'n', PieceType.Knight}, {'p', PieceType.Pawn}
     };
     private const string StartFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    public PosInfo _posInfo = new PosInfo();
+    public static PosInfo _posInfo;
 
-    private static string _lastFen;
+    // private static string _lastFen;
         
-    public void FenToBoard(string fen) {
+    public static bool FenToBoard(string fen) {
+        _posInfo = new PosInfo();
+        
         if (fen.Equals("default")) { fen = StartFen; }
         string[] fArray = fen.Split(" ");
             
         int rank = 0;
         int file = 0;
+        int count = 0;
         
         foreach (var c in fArray[0]) {
             // Debug.Log(c + " " + ((rank + 1) * 8 - file - 1));
+
+            // if (!PieceController.ValidPos(rank, file)) return false;
+
             if (c == '/') {
+                if (count != 8) {
+                    return false; }
+
+                count = 0;
                 rank++;
                 file = 0;
                 continue;
@@ -30,12 +42,14 @@ public class FenUtility {
             if (Char.IsDigit(c)) {
                 int tmp = c - '0';
                 for (int i = 0; i < tmp; i++) {
-                    _posInfo.tiles[index] = (int)Piece.None;
+                    _posInfo.tiles[index] = (int)PieceType.None;
                     file++;
                 }
+
+                count += tmp;
             }
             else {
-                char newc; // use as c is immutable
+                char newc;
                 if (Char.IsUpper(c)) {
                     _posInfo.colours[index] = true;
                     newc = Char.ToLower(c);
@@ -46,10 +60,16 @@ public class FenUtility {
                 }
                 _posInfo.tiles[index] = (int)mapPiece[Char.ToLower(newc)];
                 file++;
+                count++;
             }
         }
-
-        _lastFen = fen;
+        
+        if (count != 8) {
+            return false; }
+        
+        // TODO: implement handling of remaining sections in fen string
+        return true;
+        // _lastFen = fen;
     }
     public void OutputInfo() {
         for (int i = 64; i > 0; i--) {

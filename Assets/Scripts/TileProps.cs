@@ -1,16 +1,20 @@
 using System;
 using UnityEngine;
 
-public class TileProps : MonoBehaviour {
+public class TileProps {
     // use get / set ?
     public int id;
     [NonSerialized]
-    public int[] pos;
-    public Vector2 vec;
+    public Tuple<char, int> pos;
+    public Vector2Int vec;
     
     public int pid; // corresponding piece ID if applicable
-
+    
     public void OutputInfo() {
         Debug.Log(id + ": " + vec);
+    }
+
+    public override string ToString() {
+        return ("id: " + id + ", pid: " + pid + ", vec: " + vec);
     }
 }
