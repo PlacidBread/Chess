@@ -103,7 +103,7 @@ public readonly struct Fen {
     public readonly string positions;
     public readonly ActiveColour activeColour;
     public readonly string castling;
-    public readonly string enPassant;
+    public readonly string enPassant; // give default 
     public readonly int halfClock;
     public readonly int fullClock;
 
@@ -134,7 +134,11 @@ public readonly struct Fen {
                 break;
         }
         castling = fenArray[2];
+        if (string.IsNullOrWhiteSpace(castling)) {
+            castling = "-"; }
         enPassant = fenArray[3];
+        if (string.IsNullOrWhiteSpace(enPassant)) {
+            enPassant = "-"; }
         if (!int.TryParse(fenArray[4], out halfClock)) { failCount++; }
         if (!int.TryParse(fenArray[5], out fullClock)) { failCount++; }
 

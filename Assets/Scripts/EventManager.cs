@@ -53,6 +53,7 @@ public class EventManager : MonoBehaviour {
     IEnumerator DelayGameStart() {
         yield return new WaitForSeconds(0.5f);
         PieceController.movementState = MovementState.WaitSelect;
+        PieceController.activeColour = FenUtility.fenObj.activeColour;
     }
 
     public void GenDefaultFen() {

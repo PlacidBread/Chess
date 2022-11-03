@@ -18,10 +18,9 @@ public class PieceController : MonoBehaviour {
     public Camera cam;
 
     [NonSerialized] public static MovementState movementState;
-    private static ActiveColour _whichSide;
+    [NonSerialized] public static ActiveColour activeColour;
 
     private Piece _piece;
-    private int _lastPid;
     private int _pidRef;
     private int _tidRef;
 
@@ -29,7 +28,7 @@ public class PieceController : MonoBehaviour {
         _parentUI = GameObject.Find("UI");
         _ui = new List<GameObject>();
         movementState = MovementState.None;
-        _whichSide = FenUtility.fenObj.activeColour; // TODO: use to implement turns
+        activeColour = ActiveColour.None; // TODO: use to implement turns
         _pidRef = -1;
         _tidRef = -1;
     }
@@ -68,6 +67,24 @@ public class PieceController : MonoBehaviour {
                 var tid = GameController.ToRawNum(new Vector2(Mathf.Floor(mousePos.x), Mathf.Floor(mousePos.y)));
                 tileProps = GameController.arrayTile[tid];
                 if (tileProps.pid != -1) {
+                    var pieceProps = GameController.pidToPiece[tileProps.pid];
+                    // return if colour doesn't match activeColour
+                    switch (activeColour) {
+                        case ActiveColour.White:
+                            if (!pieceProps.isWhite) {
+                                return false;
+                            }
+
+                            break;
+                        case ActiveColour.Black:
+                            if (pieceProps.isWhite) {
+                                return false;
+                            }
+                            break;
+                        default:
+                            return false;
+                    }
+                    
                     ComputeDisplayMoves(tileProps);
                     movementState = MovementState.Selected;
                     _pidRef = tileProps.pid;
@@ -132,11 +149,6 @@ public class PieceController : MonoBehaviour {
                         // generate array for range [16, 17, ...]
                         int physPieceCount = GameController.physPieces.Count;
                         int remaining = physPieceCount - (kill.Item1 + 1);
-                        // int[] pidBig = new int[remaining];
-                        // int count = 0;
-                        // for (int i = kill.Item1 + 1; i < physPieceCount; i++) {
-                        //     pidBig[count++] = i;
-                        // }
                         
                         // decrement corresponding pid's
                         int tileCount = GameController.arrayTile.Length;
@@ -182,7 +194,6 @@ public class PieceController : MonoBehaviour {
     }
 
     private void CommenceMove(Vector2Int pos) {
-        // _pidRef = _lastPid;
         Debug.Log(_pidRef + " " + GameController.physPieces.Count);
         // change physical piece pos
         GameController.physPieces[_pidRef].transform.position =
@@ -199,8 +210,9 @@ public class PieceController : MonoBehaviour {
         int tid = GameController.ToRawNum(new Vector2(Mathf.Floor(pos.x),
             Mathf.Floor(pos.y)));
         GameController.arrayTile[tid].pid = tmpPid;
-
-        // _lastPid = _pidRef;
+        
+        // swap active colour
+        activeColour = activeColour == ActiveColour.White ? ActiveColour.Black : ActiveColour.White;
     }
     
     private Vector2 GetMouseInfo() {
