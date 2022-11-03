@@ -31,6 +31,8 @@ public abstract class Piece {
         return isNullOrEmpty ? null : kills.ToArray();
     }
 
+    public PieceProps GetPieceProps() { return pieceProps; }
+
     public void OutputMoves() {
         foreach (Vector2Int move in moves) {
             Debug.Log(move);
@@ -38,8 +40,9 @@ public abstract class Piece {
     }
     
     public void OutputHMoves() {
+        string output = "";
         foreach (Tuple<char, int> hMove in _hMoves) {
-            Debug.Log(hMove.Item1 + "" + hMove.Item2);
+            output += (hMove.Item1 + "" + hMove.Item2 + " ");
         }
     }
 
@@ -57,10 +60,10 @@ public abstract class Piece {
 
     public abstract void MakeMoves();
 
-    protected void GenMoves(Vector2Int translation) {
+    protected void GenMoves(Vector2Int translation, bool genKills = true) {
         bool specialPiece = pieceProps.type is PieceType.Pawn or PieceType.Knight or PieceType.King;
 
-        if (!pieceProps.isWhite && pieceProps.type != PieceType.Knight) {
+        if (!pieceProps.isWhite && pieceProps.type == PieceType.Pawn) {
             translation.x *= -1;
             translation.y *= -1;
         }
@@ -70,13 +73,14 @@ public abstract class Piece {
         int aPid = GameController.arrayTile[GameController.ToRawNum(nextPos)].pid;
 
         // if there is piece in new pos
-        if (aPid != -1) {
+        if (aPid != -1 && genKills) {
             CheckAndKill(aPid);
             return;
         }
-        
+
         // for specified PieceType('s), only allow this one move through
         if (specialPiece) {
+            if (aPid != -1) return;
             moves.Add(nextPos);
             return;
         }
@@ -92,9 +96,10 @@ public abstract class Piece {
         }
     }
 
-    private void CheckAndKill(int pid) {
+    protected void CheckAndKill(int pid) {
+        Debug.Log(pid + "csize" + GameController.pidToPiece.Count);
         PieceProps aPieceProps = GameController.pidToPiece[pid];
-        if (aPieceProps.isWhite != pieceProps.isWhite) {
+        if ((aPieceProps.isWhite != pieceProps.isWhite)) {
             kills.Add(new Tuple<int, Vector2Int>(pid, aPieceProps.tVec));
         }
     }

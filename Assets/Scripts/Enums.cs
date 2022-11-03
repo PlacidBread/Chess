@@ -8,3 +8,13 @@ public enum PieceType {
     Pawn // 6
 }
 
+public enum MovementState {
+    None,
+    WaitSelect,
+    Selected,
+}
+public enum ActiveColour {
+    None,
+    White,
+    Black
+}

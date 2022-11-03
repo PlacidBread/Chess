@@ -2,16 +2,15 @@ using System;
 using UnityEngine;
 
 public class TileProps {
-    // use get / set ?
     public int id;
     [NonSerialized]
     public Tuple<char, int> pos;
     public Vector2Int vec;
     
-    public int pid; // corresponding piece ID if applicable
+    public int pid; // corresponding piece ID (-1 if none)
     
     public void OutputInfo() {
-        Debug.Log(id + ": " + vec);
+        Debug.Log(ToString());
     }
 
     public override string ToString() {

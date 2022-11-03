@@ -25,10 +25,9 @@ public class GameController : MonoBehaviour {
     private GameObject _parentBoard;
     private GameObject _parentPieces;
     
-    [NonSerialized]
-    public static TileProps[] arrayTile;
-    [NonSerialized]
-    public static List<PieceProps> pidToPiece;
+    [NonSerialized] public static TileProps[] arrayTile;
+    [NonSerialized] public static List<PieceProps> pidToPiece;
+    [NonSerialized] public static List<GameObject> physPieces; 
 
     private static int _id;
 
@@ -71,6 +70,7 @@ public class GameController : MonoBehaviour {
         _parentPieces = GameObject.Find("Pieces");
         arrayTile = new TileProps[64];
         pidToPiece = new List<PieceProps>();
+        physPieces = new List<GameObject>();
         DrawBoard();
         StartCoroutine(WaitForFen());
         
@@ -138,7 +138,8 @@ public class GameController : MonoBehaviour {
             default:
                 return;
         }
-
+        
+        physPieces.Add(piece);
         arrayTile[i].pid = _id++;
         pidToPiece.Add(pieceProps);
     }

@@ -1,5 +1,6 @@
 
 using System;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class King : Piece {
@@ -60,7 +61,8 @@ public class Pawn : Piece {
     
     private static readonly Vector2Int Translation = Vector2Int.up;
     private static readonly Vector2Int[] TranslationS = { Vector2Int.up, new(0, 2) };
-    private static readonly Vector2Int[] KillTranslations = { new (-1, 1), new (1, 1) };
+    private static readonly Vector2Int[] KillTranslationsW = { new (-1, 1), new (1, 1) };
+    private static readonly Vector2Int[] KillTranslationsB = { new (-1, -1), new (1, -1) };
 
     private bool IsStartingPos() {
         if (pieceProps.isWhite) {
@@ -72,15 +74,30 @@ public class Pawn : Piece {
     // add functionality for promotion
     public override void MakeMoves() {
         if (IsStartingPos()) {
-            foreach (var t in TranslationS) {
-                GenMoves(t);
+            foreach (var move in TranslationS) {
+                GenMoves(move, false);
             }
         }
         else {
-            GenMoves(Translation);
+            GenMoves(Translation, false);
         }
-        
-        // TODO: Generate kills using KillTranslations
+
+        Debug.Log(pieceProps.isWhite);
+        // for (int i = 0; i < tmpTranslations.Length; i++) {
+        //     if (!pieceProps.isWhite) {
+        //         tmpTranslations[i].y *= -1;
+        //     }
+        // }
+
+        foreach (var kill in pieceProps.isWhite ? KillTranslationsW : KillTranslationsB) {
+            Vector2Int nextPos = new Vector2Int(pieceProps.tVec.x + kill.x, pieceProps.tVec.y + kill.y);
+            if (!PieceController.ValidPos(nextPos)) return;
+            int aPid = GameController.arrayTile[GameController.ToRawNum(nextPos)].pid;
+            Debug.Log(GameController.ToRawNum(nextPos));
+            if (aPid != -1) {
+                CheckAndKill(aPid);
+            }
+        }
     }
 }
 
