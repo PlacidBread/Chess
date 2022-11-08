@@ -31,6 +31,10 @@ public class Rook : Piece {
         foreach (var t in Translations) {
             GenMoves(t);
         }
+
+        if (FenUtility.fenObj.castling[0] != '-') {
+            
+        }
     }
 }
 
@@ -71,6 +75,7 @@ public class Pawn : Piece {
 
         return pieceProps.tVec.y == 6;
     }
+    
     // add functionality for promotion
     public override void MakeMoves() {
         if (IsStartingPos()) {
@@ -81,19 +86,12 @@ public class Pawn : Piece {
         else {
             GenMoves(Translation, false);
         }
-
-        Debug.Log(pieceProps.isWhite);
-        // for (int i = 0; i < tmpTranslations.Length; i++) {
-        //     if (!pieceProps.isWhite) {
-        //         tmpTranslations[i].y *= -1;
-        //     }
-        // }
-
+        
         foreach (var kill in pieceProps.isWhite ? KillTranslationsW : KillTranslationsB) {
             Vector2Int nextPos = new Vector2Int(pieceProps.tVec.x + kill.x, pieceProps.tVec.y + kill.y);
-            if (!PieceController.ValidPos(nextPos)) return;
+            if (!PieceController.ValidPos(nextPos)) continue;
+            
             int aPid = GameController.arrayTile[GameController.ToRawNum(nextPos)].pid;
-            Debug.Log(GameController.ToRawNum(nextPos));
             if (aPid != -1) {
                 CheckAndKill(aPid);
             }

@@ -35,7 +35,7 @@ public abstract class Piece {
 
     public void OutputMoves() {
         foreach (Vector2Int move in moves) {
-            Debug.Log(move);
+            Debug.Log(move.ToString());
         }
     }
     
@@ -97,7 +97,7 @@ public abstract class Piece {
     }
 
     protected void CheckAndKill(int pid) {
-        Debug.Log(pid + "csize" + GameController.pidToPiece.Count);
+        // Debug.Log(pid + "csize" + GameController.pidToPiece.Count);
         PieceProps aPieceProps = GameController.pidToPiece[pid];
         if ((aPieceProps.isWhite != pieceProps.isWhite)) {
             kills.Add(new Tuple<int, Vector2Int>(pid, aPieceProps.tVec));

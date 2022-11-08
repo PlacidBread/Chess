@@ -124,7 +124,7 @@ public class GameController : MonoBehaviour {
                 piece = Create<PieceProps>(isWhite ? wQueen : bQueen, pos);
                 break;
             case PieceType.Rook:
-                piece = Create<PieceProps>(isWhite ? wRook: bRook, pos);
+                piece = Create<PieceProps>(isWhite ? wRook : bRook, pos);
                 break;
             case PieceType.Bishop:
                 piece = Create<PieceProps>(isWhite ? wBishop : bBishop, pos);

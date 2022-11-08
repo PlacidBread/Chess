@@ -227,6 +227,7 @@ public class PieceController : MonoBehaviour {
         // instantiate squareSelected for empty tiles as well?
         var tmpUI = CreateUI(squareSelected, tileProps.vec);
         _ui.Add(tmpUI);
+        // TODO: keep an array of Piece objects?
         _piece = DecidePiece(tileProps.pid);
         _piece.MakeMoves(); 
         var moves = _piece.GetMoves();
