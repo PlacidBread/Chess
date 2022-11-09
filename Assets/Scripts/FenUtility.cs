@@ -74,7 +74,7 @@ public class FenUtility {
                 count++;
             }
         }
-        
+
         return count == 8;
         
         // TODO: implement handling of remaining sections in fen string
@@ -87,6 +87,10 @@ public class FenUtility {
             }
             Debug.Log(_posInfo.tiles[i - 1].ToString());
         }
+    }
+
+    public void UseFen() {
+        PieceController.activeColour = fenObj.activeColour;
     }
 }
 
@@ -136,11 +140,10 @@ public readonly struct Fen {
                 failCount++;
                 break;
         }
-        
-        // castling = fenArray[2];
-        
+
+        // TODO: conduct extra step to verify castling info (3)
         if (string.IsNullOrWhiteSpace(fenArray[2])) {
-            
+            castling.Add('-');
         }
         else {
             foreach (var c in fenArray[2]) {

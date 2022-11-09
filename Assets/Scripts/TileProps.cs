@@ -10,7 +10,7 @@ public class TileProps {
     public int pid; // corresponding piece ID (-1 if none)
     
     public void OutputInfo() {
-        Debug.Log(ToString());
+        Debug.Log("TileProps - " + ToString());
     }
 
     public override string ToString() {

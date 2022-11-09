@@ -85,6 +85,7 @@ public abstract class Piece {
             return;
         }
         
+        // loop until position is invalid or hit another piece
         while (aPid == -1) {
             moves.Add(nextPos);
             nextPos = new Vector2Int(nextPos.x + translation.x, nextPos.y + translation.y);

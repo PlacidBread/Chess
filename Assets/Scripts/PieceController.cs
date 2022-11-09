@@ -9,7 +9,7 @@ public class PieceController : MonoBehaviour {
     public GameObject squareKillable;
     public GameObject squareMovable;
     public GameObject squareSelected;
-    // public GameObject darkSquare;
+    // public GameObject da rkSquare;
     // public GameObject lightSquare;
 
     private GameObject _parentUI;
@@ -28,7 +28,7 @@ public class PieceController : MonoBehaviour {
         _parentUI = GameObject.Find("UI");
         _ui = new List<GameObject>();
         movementState = MovementState.None;
-        activeColour = ActiveColour.None; // TODO: use to implement turns
+        activeColour = ActiveColour.None;
         _pidRef = -1;
         _tidRef = -1;
     }
@@ -68,6 +68,9 @@ public class PieceController : MonoBehaviour {
                 tileProps = GameController.arrayTile[tid];
                 if (tileProps.pid != -1) {
                     var pieceProps = GameController.pidToPiece[tileProps.pid];
+                    tileProps.OutputInfo();
+                    pieceProps.OutputInfo();
+                    Debug.Log(activeColour);
                     // return if colour doesn't match activeColour
                     switch (activeColour) {
                         case ActiveColour.White:
@@ -110,9 +113,32 @@ public class PieceController : MonoBehaviour {
                 
                 // handle case: user clicks on another piece of the same colour
                 if (aPid != -1) {
-                    var aPieceIsWhite = GameController.pidToPiece[aPid].isWhite;
-                    Debug.Log("mouse white?: " + aPieceIsWhite + " selected white?: " + _piece.GetPieceProps().isWhite);
-                    if (aPieceIsWhite == _piece.GetPieceProps().isWhite) {
+                    var pieceProps = _piece.GetPieceProps();
+                    var aPieceProps = GameController.pidToPiece[aPid];
+                    // Debug.Log("mouse white?: " + aPieceIsWhite + " selected white?: " + _piece.GetPieceProps().isWhite);
+                    if (aPieceProps.isWhite == pieceProps.isWhite) {
+                        
+                        // handle castle moves
+                        if (pieceProps.type == PieceType.King) {
+                            var rPiece = (King)_piece;
+                            var castleMoves = rPiece.GetCastleMoves();
+                            if (castleMoves != null && castleMoves.Length != 0) {
+                                foreach (var (cPid, kingPos) in castleMoves) {
+                                    if (cPid == aPid) {
+                                        CommenceMove(kingPos);
+
+                                        bool kingSide = aPieceProps.tVec.x == 7;
+                                        Vector2Int rookPos = new Vector2Int(kingSide ? kingPos.x - 1 : kingPos.x + 1, kingPos.y);
+                                        _pidRef = aPid;
+                                        // set appropriate position for rook (next to king)
+                                        CommenceMove(rookPos, false);
+                                        DestroyUI();
+                                        movementState = MovementState.WaitSelect;
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
                         DestroyUI();
                         movementState = MovementState.WaitSelect;
                         return false;
@@ -150,7 +176,7 @@ public class PieceController : MonoBehaviour {
                         int physPieceCount = GameController.physPieces.Count;
                         int remaining = physPieceCount - (kill.Item1 + 1);
                         
-                        // decrement corresponding pid's
+                        // decrement pids so that they remain valid
                         int tileCount = GameController.arrayTile.Length;
                         int count = 0;
                         for (int i = 0; i < tileCount; i++) {
@@ -181,7 +207,6 @@ public class PieceController : MonoBehaviour {
                 }
                 
                 // if its an empty tile and wasn't part of moves or kills, reset UI and state
-
                 DestroyUI();
                 movementState = MovementState.WaitSelect;
                 return false;
@@ -193,7 +218,7 @@ public class PieceController : MonoBehaviour {
         return false;
     }
 
-    private void CommenceMove(Vector2Int pos) {
+    private void CommenceMove(Vector2Int pos, bool swapActiveColour = true) {
         Debug.Log(_pidRef + " " + GameController.physPieces.Count);
         // change physical piece pos
         GameController.physPieces[_pidRef].transform.position =
@@ -212,7 +237,65 @@ public class PieceController : MonoBehaviour {
         GameController.arrayTile[tid].pid = tmpPid;
         
         // swap active colour
-        activeColour = activeColour == ActiveColour.White ? ActiveColour.Black : ActiveColour.White;
+        if (swapActiveColour) {
+            activeColour = activeColour == ActiveColour.White ? ActiveColour.Black : ActiveColour.White;
+        }
+        
+        // change booleans for king and rook if they are moving off their starting square
+        var pieceProps = _piece.GetPieceProps();
+        if (Rook.AllMoved() && King.AllMoved()) return;
+        if (pieceProps.type is PieceType.Rook or PieceType.King) { ChangePieceVars(pieceProps);}
+    }
+
+    private void ChangePieceVars(PieceProps pieceProps) {
+        Vector2Int[] rookVecPositionsW = { new(0, 7), new (0, 0) };
+        Vector2Int[] rookVecPositionsB = { new(7, 7), new (7, 0) };
+        
+        // optimize later
+        if (pieceProps.isWhite) {
+            switch (pieceProps.type) {
+                case PieceType.Rook: {
+                    if (pieceProps.tVec == rookVecPositionsW[0] && Rook.rookMovedK == false) {
+                        Rook.rookMovedK = true;
+                    }
+                    if (pieceProps.tVec == rookVecPositionsW[1] && Rook.rookMovedQ == false) {
+                        Rook.rookMovedQ = true;
+                    }
+
+                    break;
+                }
+                case PieceType.King: {
+                    if (King.kingMovedW) break;
+                    if (pieceProps.tVec == new Vector2Int(0, 4)) {
+                        King.kingMovedW = true;
+                    }
+
+                    break;
+                }
+            }
+        }
+        else {
+            switch (pieceProps.type) {
+                case PieceType.Rook: {
+                    if (pieceProps.tVec == rookVecPositionsB[0] && Rook.rookMovedk == false) {
+                        Rook.rookMovedk = true;
+                    }
+                    if (pieceProps.tVec == rookVecPositionsB[1] && Rook.rookMovedq == false) {
+                        Rook.rookMovedq = true;
+                    }
+
+                    break;
+                }
+                case PieceType.King: {
+                    if (King.kingMovedB) break;
+                    if (pieceProps.tVec == new Vector2Int(7, 4)) {
+                        King.kingMovedB = true;
+                    }
+
+                    break;
+                }
+            }
+        }
     }
     
     private Vector2 GetMouseInfo() {
@@ -243,11 +326,14 @@ public class PieceController : MonoBehaviour {
             }
         }
 
-        if (kills == null || kills.Length == 0) return;
-        foreach (var kill in kills) {
-            tmpUI = CreateUI(squareKillable, kill.Item2);
-            _ui.Add(tmpUI);
+        if (kills != null && kills.Length != 0) {
+            foreach (var kill in kills) {
+                tmpUI = CreateUI(squareKillable, kill.Item2);
+                _ui.Add(tmpUI);
+            }
         }
+        
+        
     }
     
     private Piece DecidePiece(int pid) {
